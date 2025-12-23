@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"strings"
 )
 
 // Extract7z extracts a 7z archive using the 7z command-line utility

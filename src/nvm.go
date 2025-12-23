@@ -35,7 +35,6 @@ import (
 
 	"github.com/coreybutler/go-where"
 	"github.com/ncruces/zenity"
-	"github.com/olekukonko/tablewriter"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
@@ -1377,13 +1376,12 @@ func list(listtype string) {
 		}
 
 		fmt.Println("")
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"   Current  ", "    LTS     ", " Old Stable ", "Old Unstable"})
-		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetAlignment(tablewriter.ALIGN_CENTER)
-		table.SetCenterSeparator("|")
-		table.AppendBulk(data) // Add Bulk Data
-		table.Render()
+		// Format and print the table manually
+		fmt.Printf("%-15s %-15s %-15s %-15s\n", "   Current  ", "    LTS     ", " Old Stable ", "Old Unstable")
+		fmt.Println(strings.Repeat("-", 60))
+		for _, row := range data {
+			fmt.Printf("%-15s %-15s %-15s %-15s\n", row[0], row[1], row[2], row[3])
+		}
 
 		fmt.Println("\nThis is a partial list. For a complete list, visit https://nodejs.org/en/download/releases")
 	}
