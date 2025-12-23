@@ -70,6 +70,21 @@ if errorlevel 1 (
 echo Done!
 echo.
 
+REM Create settings.txt file
+echo Creating settings.txt configuration file...
+(
+    echo root: %INSTALL_DIR%
+    echo path: %SYMLINK_DIR%
+    echo arch: 64
+    echo proxy: none
+) > "%INSTALL_DIR%\settings.txt"
+if errorlevel 1 (
+    echo WARNING: Failed to create settings.txt
+) else (
+    echo ✓ Created settings.txt
+)
+echo.
+
 REM Set environment variables
 echo Setting environment variables...
 
