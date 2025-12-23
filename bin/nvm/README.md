@@ -3,95 +3,143 @@
 ## Package Contents
 
 - **nvm.exe** - The main NVM executable (Node Version Manager)
-- **nvm-installer.exe** - The installer/setup utility for Windows
-- **install.bat** - Easy installation batch script
+- **install.bat** - Installation script (handles everything automatically)
+- **README.md** - This file
 
 ## Quick Start
 
-### Option 1: Automatic Installation (Easiest)
-1. Right-click **install.bat** and select "Run as Administrator"
-2. Follow the prompts
-3. Restart your terminal/PowerShell
-4. Verify: `nvm --version`
+### Automatic Installation (Easiest)
 
-### Option 2: Manual Installation
-1. Right-click **nvm-installer.exe** and select "Run as Administrator"
-2. Follow the prompts
-3. Restart your terminal/PowerShell
+1. **Right-click `install.bat`** and select **"Run as Administrator"**
+2. Follow the on-screen prompts (or press ENTER for defaults)
+3. **Close all open terminals/PowerShell windows**
+4. **Open a new PowerShell/CMD window**
+5. Verify installation: `nvm --version`
 
-## What Gets Installed
-
-The installer will:
-- ✅ Create NVM installation directory (default: `%LOCALAPPDATA%\nvm`)
+That's it! The script will:
+- ✅ Copy nvm.exe to your NVM directory
 - ✅ Set `NVM_HOME` environment variable
-- ✅ Set `NVM_SYMLINK` environment variable
-- ✅ Create symlink directory (default: `C:\nvm4w\nodejs`)
-- ✅ Update system PATH
+- ✅ Set `NVM_SYMLINK` environment variable  
+- ✅ Update system PATH automatically
+- ✅ Configure everything for Node.js version management
 
-## Requirements
+## System Requirements
 
 - **OS:** Windows 10 or later
-- **Admin Rights:** Required for environment variable setup
-- **7-Zip:** Install from https://7-zip.org/ (needed for extracting Node.js)
-  - Or: `choco install 7zip` (if using Chocolatey)
+- **Admin Rights:** Required to run the installation script
+- **7-Zip:** Required for extracting Node.js packages
+  - Download from: https://7-zip.org/
+  - Or install via Chocolatey: `choco install 7zip`
 
-## Features
+## Default Installation Paths
 
-✨ **Version Management**
-- Download and install multiple Node.js versions
-- Switch between versions instantly
-- Automatic version detection
-
-🔧 **NPM Management**
-- Built-in NPM support
-- Automatic NPM version management
-
-🚀 **System Integration**
-- Command-line access: `nvm install latest`
-- Works with PowerShell and CMD
-- Global Node.js availability
+If you don't specify custom paths, the installer uses:
+- **Install Directory:** `%LOCALAPPDATA%\nvm` (usually `C:\Users\YourUsername\AppData\Local\nvm`)
+- **Symlink Directory:** `C:\nvm4w\nodejs` (for active Node.js version)
 
 ## After Installation
 
+Once installed and you've reopened your terminal:
+
 ```powershell
-# Install the latest Node.js version
+# Install the latest Node.js
 nvm install latest
 
 # Or install a specific version
 nvm install 18.12.0
 
+# List installed versions
+nvm list
+
 # Switch to a version
 nvm use 18.12.0
 
-# Verify installation
+# Verify Node.js
 node --version
 npm --version
+```
+
+## Common Commands
+
+```powershell
+# Show help
+nvm --help
+
+# List all available Node.js versions
+nvm list available
+
+# Install LTS version
+nvm install lts
+
+# Uninstall a version
+nvm uninstall 16.13.0
+
+# Show current version
+nvm current
 ```
 
 ## Troubleshooting
 
 **Issue:** `nvm` command not found
-- **Solution:** Restart PowerShell/CMD to reload environment variables
+- **Solution:** Restart PowerShell/CMD completely (close and reopen window)
 
-**Issue:** "Permission denied" when installing Node.js
+**Issue:** Permission denied when installing Node.js
 - **Solution:** Run PowerShell as Administrator
 
-**Issue:** 7-Zip not found
+**Issue:** Cannot extract Node.js files
 - **Solution:** Install 7-Zip from https://7-zip.org/
+
+**Issue:** Install script fails
+- **Solution:** 
+  1. Make sure you're running as Administrator
+  2. Check that you have write permissions to the destination folder
+  3. Disable antivirus temporarily if it's blocking file operations
 
 ## Uninstallation
 
-1. Run `nvm unsubscribe` in PowerShell
+To completely remove NVM:
+
+1. Run in PowerShell:
+   ```powershell
+   nvm unsubscribe
+   ```
+
 2. Delete the NVM installation folder (default: `%LOCALAPPDATA%\nvm`)
-3. Remove `%NVM_HOME%` and `%NVM_SYMLINK%` from environment variables manually
+
+3. Manually remove environment variables from System Properties:
+   - Open "Edit environment variables for your account"
+   - Remove `NVM_HOME` and `NVM_SYMLINK` variables
+   - Remove `%NVM_HOME%` and `%NVM_SYMLINK%` from PATH
+
+## Features
+
+🚀 **Version Management**
+- Download and install multiple Node.js versions
+- Switch between versions instantly
+- Automatic version detection
+
+📦 **NPM Integration**
+- Built-in NPM support
+- Automatic NPM version management
+- Global package management
+
+🔧 **System Integration**
+- Works with PowerShell, CMD, and Git Bash
+- Environment variable management
+- Automatic PATH configuration
 
 ## More Information
 
-- **GitHub:** https://github.com/coreybutler/nvm-windows
-- **Node.js:** https://nodejs.org/
+- **Original Project:** https://github.com/coreybutler/nvm-windows
+- **Node.js Official:** https://nodejs.org/
+- **NPM Documentation:** https://docs.npmjs.com/
 
 ---
 
 **Version:** 1.2.2  
 **Author:** Faran.ali  
-**Features:** 7z extraction support, improved Windows 10 compatibility
+**Key Features:** 
+- 7z extraction support for smaller file sizes
+- Windows 10 optimized
+- Simplified single-script installation
+
