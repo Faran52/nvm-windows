@@ -3,7 +3,6 @@ package web
 import (
 	"crypto/tls"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -19,8 +18,6 @@ import (
 	"syscall"
 
 	"nvm/utility"
-
-	"archive/zip"
 
 	"github.com/blang/semver"
 	fs "github.com/coreybutler/go-fsutil"
@@ -181,8 +178,8 @@ func Download(url string, target string, version string) bool {
 			return Download(redirect, target, version)
 		}
 
-		if strings.Contains(url, "/npm/cli/archive/v6.14.17.zip") {
-			return Download("https://github.com/npm/cli/archive/refs/tags/v6.14.17.zip", target, version)
+		if strings.Contains(url, "/npm/cli/archive/v6.14.17") {
+			return Download("https://github.com/npm/cli/archive/refs/tags/v6.14.17.7z", target, version)
 		}
 
 		fmt.Printf("\n\nREMOTE SERVER FAILURE\n\n---\nGET %v --> %v\n\n", url, response.StatusCode)
@@ -252,19 +249,19 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 		fmt.Println("Node.js v" + v + " " + a + "bit isn't available right now.")
 	} else {
 		fileName := root + "\\v" + v + "\\node" + a + ".exe"
-		if strings.HasSuffix(url, ".zip") {
-			fileName = root + "\\v" + v + "\\node.zip"
+		if strings.HasSuffix(url, ".7z") {
+			fileName = root + "\\v" + v + "\\node.7z"
 		}
 
 		fmt.Println("Downloading node.js version " + v + " (" + a + "-bit)... ")
 
 		if Download(url, fileName, v) {
 			utility.DebugLog("download succeeded")
-			// Extract the zip file
-			if strings.HasSuffix(url, ".zip") {
+			// Extract the 7z archive
+			if strings.HasSuffix(url, ".7z") {
 				fmt.Println("Extracting node and npm...")
 				utility.DebugLogf("extracting %v to %v", fileName, root+"\\v"+v)
-				err := unzip(fileName, root+"\\v"+v)
+				err := file.Extract7z(fileName, root+"\\v"+v)
 				if err != nil {
 					fmt.Println("Error extracting from Node archive: " + err.Error())
 
@@ -283,19 +280,20 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 				}
 				utility.DebugLogf("removed %v", fileName)
 
-				zip := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(url), ".zip", "", 1)
-				utility.DebugLogf("moving %v to %v", zip, root+"\\v"+v)
-				err = fs.Move(zip, root+"\\v"+v, true)
+				// Get the archive name without extension for moving extracted files
+				archiveName := root + "\\v" + v + "\\" + strings.Replace(filepath.Base(url), ".7z", "", 1)
+				utility.DebugLogf("moving %v to %v", archiveName, root+"\\v"+v)
+				err = fs.Move(archiveName, root+"\\v"+v, true)
 				if err != nil {
 					fmt.Println("ERROR moving file: " + err.Error())
 				}
 				utility.DebugLog("move succeeded")
 
-				err = os.RemoveAll(zip)
+				err = os.RemoveAll(archiveName)
 				if err != nil {
-					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", zip)
+					fmt.Printf("Failed to remove %v after successful extraction. Please remove manually.", archiveName)
 				}
-				utility.DebugLogf("removed %v", zip)
+				utility.DebugLogf("removed %v", archiveName)
 
 				utility.DebugFn(func() {
 					cmd := exec.Command("cmd", "/C", "dir", root+"\\v"+v)
@@ -319,9 +317,9 @@ func GetNodeJS(root string, v string, a string, append bool) bool {
 }
 
 func GetNpm(root string, v string) bool {
-	url := GetFullNpmUrl("v" + v + ".zip")
+	url := GetFullNpmUrl("v" + v + ".7z")
 
-	// temp directory to download the .zip file
+	// temp directory to download the .7z file
 	tempDir := root + "\\temp"
 
 	utility.DebugLogf("downloading npm from %v to %v", url, tempDir)
@@ -335,7 +333,7 @@ func GetNpm(root string, v string) bool {
 			os.Exit(1)
 		}
 	}
-	fileName := tempDir + "\\" + "npm-v" + v + ".zip"
+	fileName := tempDir + "\\" + "npm-v" + v + ".7z"
 
 	fmt.Printf("Downloading npm version " + v + "... ")
 	if Download(url, fileName, v) {
@@ -429,7 +427,7 @@ func getNodeUrl(v string, vpre string, arch string, append bool) string {
 		corepack, _ := semver.Make("16.9.0")
 
 		if version.GTE(corepack) {
-			url = GetFullNodeUrl("v" + v + "/node-v" + v + "-win-" + a + ".zip")
+			url = GetFullNodeUrl("v" + v + "/node-v" + v + "-win-" + a + ".7z")
 		}
 	}
 
@@ -439,68 +437,4 @@ func getNodeUrl(v string, vpre string, arch string, append bool) string {
 		return ""
 	}
 	return url
-}
-
-func unzip(src, dest string) error {
-	r, err := zip.OpenReader(src)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := r.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
-	os.MkdirAll(dest, 0755)
-
-	// Closure to address file descriptors issue with all the deferred .Close() methods
-	extractAndWriteFile := func(f *zip.File) error {
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err := rc.Close(); err != nil {
-				panic(err)
-			}
-		}()
-
-		path := filepath.Join(dest, f.Name)
-
-		// Check for ZipSlip (Directory traversal)
-		if !strings.HasPrefix(path, filepath.Clean(dest)+string(os.PathSeparator)) {
-			return fmt.Errorf("illegal file path: %s", path)
-		}
-
-		if f.FileInfo().IsDir() {
-			os.MkdirAll(path, f.Mode())
-		} else {
-			os.MkdirAll(filepath.Dir(path), f.Mode())
-			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			if err != nil {
-				return err
-			}
-			defer func() {
-				if err := f.Close(); err != nil {
-					panic(err)
-				}
-			}()
-
-			_, err = io.Copy(f, rc)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	for _, f := range r.File {
-		err := extractAndWriteFile(f)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

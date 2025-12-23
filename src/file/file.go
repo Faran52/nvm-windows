@@ -1,59 +1,34 @@
 package file
 
 import (
-	"archive/zip"
 	"bufio"
-	"io"
-	"log"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
-// Function courtesy http://stackoverflow.com/users/1129149/swtdrgn
-func Unzip(src, dest string) error {
-	r, err := zip.OpenReader(src)
+// Extract7z extracts a 7z archive using the 7z command-line utility
+// This function requires 7z to be installed and available in the system PATH
+func Extract7z(src, dest string) error {
+	// Ensure destination directory exists
+	err := os.MkdirAll(dest, 0755)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create destination directory: %w", err)
 	}
-	defer r.Close()
 
-	for _, f := range r.File {
-		if !strings.Contains(f.Name, "..") {
-			rc, err := f.Open()
-			if err != nil {
-				return err
-			}
-			defer rc.Close()
+	// Check if 7z command is available
+	_, err = exec.LookPath("7z")
+	if err != nil {
+		return fmt.Errorf("7z is not installed or not in PATH: %w", err)
+	}
 
-			fpath := filepath.Join(dest, f.Name)
-			if f.FileInfo().IsDir() {
-				os.MkdirAll(fpath, f.Mode())
-			} else {
-				var fdir string
-				if lastIndex := strings.LastIndex(fpath, string(os.PathSeparator)); lastIndex > -1 {
-					fdir = fpath[:lastIndex]
-				}
-
-				err = os.MkdirAll(fdir, f.Mode())
-				if err != nil {
-					log.Fatal(err)
-					return err
-				}
-				f, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-				if err != nil {
-					return err
-				}
-				defer f.Close()
-
-				_, err = io.Copy(f, rc)
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			log.Printf("failed to extract file: %s (cannot validate)\n", f.Name)
-		}
+	// Extract the 7z file using command line
+	cmd := exec.Command("7z", "x", "-o"+dest, src)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to extract 7z archive: %v, output: %s", err, string(output))
 	}
 
 	return nil
