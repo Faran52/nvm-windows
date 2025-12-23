@@ -7,7 +7,6 @@
 # Folders
 _obj
 _test
-bin
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -21,7 +20,6 @@ _cgo_export.*
 
 _testmain.go
 
-*.exe
 !utilities/**/*.exe
 *.test
 *.prof
@@ -30,11 +28,6 @@ _testmain.go
 
 dist
 src/v*
-bin/*.log
-bin/LICENSE
-!bin/buildtools/*
-!assets/buildtools/*
-bin/*.zip
 
 !.gitignore
 !.gitattributes
